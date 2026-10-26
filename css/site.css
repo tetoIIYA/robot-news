@@ -210,7 +210,8 @@ footer .wm{height:22px;width:auto}
 .no-js-note{font-size:12px;color:var(--faint)}
 .tile{text-decoration:none}
 .meta a{text-decoration:none}.meta a:hover{text-decoration:underline}
-.lead-weekly{font-size:13.5px;margin:-8px 0 16px !important}.lead-weekly a{color:var(--orange-ink)}
+.lead-weekly{margin:-4px 0 18px !important}.lead-weekly .btn{border-color:var(--orange);color:var(--orange-ink)}.lead-weekly .btn:hover{background:var(--orange);color:#fff}
+.lw-period{font-family:var(--f-mono);font-weight:400;font-size:12px;opacity:.8}
 /* weekly digest */
 .wk-sec{margin-top:8px}
 .pick-note{margin:-6px 0 4px;padding:8px 12px;font-size:13.5px;color:var(--ink);background:var(--orange-soft);border-radius:0 0 10px 10px}
