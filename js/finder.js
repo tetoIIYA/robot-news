@@ -5,9 +5,9 @@
   const dn = k => (D.find(x => x.key === k) || {}).name || k;
   const tn = k => (T.find(x => x.key === k) || {}).name || k;
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const st = { d: new Set(), t: new Set(), r: "all", p: "week", q: "" };
-  try { const s = JSON.parse(localStorage.getItem("rn-filter") || "null"); if (s) { st.d = new Set(s.d); st.t = new Set(s.t); st.r = s.r || "all"; st.p = s.p || "week"; } } catch (e) {}
-  const save = () => { try { localStorage.setItem("rn-filter", JSON.stringify({ d: [...st.d], t: [...st.t], r: st.r, p: st.p })); } catch (e) {} };
+  const st = { d: new Set(), t: new Set(), r: "all", p: "week", q: "", s: "rank" };
+  try { const s = JSON.parse(localStorage.getItem("rn-filter") || "null"); if (s) { st.d = new Set(s.d); st.t = new Set(s.t); st.r = s.r || "all"; st.p = s.p || "week"; st.s = s.s === "new" ? "new" : "rank"; } } catch (e) {}
+  const save = () => { try { localStorage.setItem("rn-filter", JSON.stringify({ d: [...st.d], t: [...st.t], r: st.r, p: st.p, s: st.s })); } catch (e) {} };
   let A = [];
   const weeks = [];
   const inPeriod = a => st.p === "all" || (st.p === "week" ? a.w === RN.week : weeks.slice(0, 4).includes(a.w));
@@ -44,10 +44,15 @@
       return `<button type="button" class="chip" data-t="${x.key}" aria-pressed="${on}" ${!n && !on ? "disabled" : ""} title="${esc(x.desc)}">${esc(x.name)}<span class="n">${n}</span></button>`; }).join("");
     document.querySelectorAll("#regionSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.r === st.r));
     document.querySelectorAll("#periodSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === st.p));
+    document.querySelectorAll("#sortSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.s === st.s));
   };
   const render = () => {
     chips();
-    const list = A.filter(a => match(a)).sort((x, y) => (y.w > x.w) - (y.w < x.w) || (y.rk - x.rk));
+    // 重要度順：週ごとに重要度の高い順／新しい順：日付の新しい順（同じ日は重要度順）
+    const cmp = (a, b) => (a > b) - (a < b);
+    const list = A.filter(a => match(a)).sort(st.s === "new"
+      ? (x, y) => cmp(y.ds || "", x.ds || "") || (y.rk - x.rk)
+      : (x, y) => cmp(y.w, x.w) || (y.rk - x.rk));
     document.getElementById("cards").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">この条件に当てはまるトピックはありません。条件を減らすか、期間を広げてみてください。</div>`;
     const parts = [...[...st.d].map(dn), ...[...st.t].map(tn)];
     document.getElementById("resultLabel").textContent = `${list.length}件のトピック` + (parts.length ? `（${parts.join("・")}）` : "");
@@ -60,6 +65,7 @@
     if (c && !c.disabled) { const set = c.dataset.d ? st.d : st.t, k = c.dataset.d || c.dataset.t; set.has(k) ? set.delete(k) : set.add(k); render(); return; }
     const r = e.target.closest("#regionSeg button"); if (r) { st.r = r.dataset.r; render(); return; }
     const p = e.target.closest("#periodSeg button"); if (p) { st.p = p.dataset.p; render(); return; }
+    const s = e.target.closest("#sortSeg button"); if (s) { st.s = s.dataset.s; render(); return; }
   });
   const q = document.getElementById("q");
   q.addEventListener("input", () => { st.q = q.value.trim(); render(); });
