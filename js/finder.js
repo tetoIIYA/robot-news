@@ -48,11 +48,11 @@
   };
   const render = () => {
     chips();
-    // 重要度順：週ごとに重要度の高い順／新しい順：日付の新しい順（同じ日は重要度順）
+    // 重要度順：週ごとに重要度の高い順（同点は取り上げた媒体数が多い順→新しい順）／新しい順：日付の新しい順（同じ日は重要度順）
     const cmp = (a, b) => (a > b) - (a < b);
     const list = A.filter(a => match(a)).sort(st.s === "new"
       ? (x, y) => cmp(y.ds || "", x.ds || "") || (y.rk - x.rk)
-      : (x, y) => cmp(y.w, x.w) || (y.rk - x.rk));
+      : (x, y) => cmp(y.w, x.w) || (y.rk - x.rk) || ((y.n || 0) - (x.n || 0)) || cmp(y.ds || "", x.ds || ""));
     document.getElementById("cards").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">この条件に当てはまるトピックはありません。条件を減らすか、期間を広げてみてください。</div>`;
     const parts = [...[...st.d].map(dn), ...[...st.t].map(tn)];
     document.getElementById("resultLabel").textContent = `${list.length}件のトピック` + (parts.length ? `（${parts.join("・")}）` : "");
