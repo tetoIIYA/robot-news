@@ -10,7 +10,17 @@
   const save = () => { try { localStorage.setItem("rn-filter", JSON.stringify({ d: [...st.d], t: [...st.t], r: st.r, p: st.p, s: st.s })); } catch (e) {} };
   let A = [];
   const weeks = [];
-  const inPeriod = a => st.p === "all" || (st.p === "week" ? a.w === RN.week : weeks.slice(0, 4).includes(a.w));
+  // 週スラッグ（ISO年-w週番号、金曜を含む週）の1つ前の週を求める。先週にトピックが無くても正しい週を指す
+  const prevWeek = slug => {
+    const m = /^(\d{4})-w(\d{2})$/.exec(slug || ""); if (!m) return "";
+    const y = +m[1], n = +m[2], j4 = Date.UTC(y, 0, 4), mon1 = j4 - ((new Date(j4).getUTCDay() + 6) % 7) * 864e5;
+    const d = new Date(mon1 + ((n - 1) * 7 + 4 - 7) * 864e5);           // 前の週の金曜
+    const thu = new Date(d.getTime() + (3 - ((d.getUTCDay() + 6) % 7)) * 864e5), ty = thu.getUTCFullYear();
+    const w = 1 + Math.floor((thu - Date.UTC(ty, 0, 1)) / 864e5 / 7);
+    return `${ty}-w${String(w).padStart(2, "0")}`;
+  };
+  const lastWeek = prevWeek(RN.week);
+  const inPeriod = a => st.p === "all" || (st.p === "week" ? a.w === RN.week : st.p === "last" ? a.w === lastWeek : weeks.slice(0, 4).includes(a.w));
   const match = (a, skip) => {
     if (!inPeriod(a)) return false;
     if (skip !== "d" && st.d.size && !st.d.has(a.d)) return false;
@@ -57,7 +67,7 @@
     const parts = [...[...st.d].map(dn), ...[...st.t].map(tn)];
     document.getElementById("resultLabel").textContent = `${list.length}件のトピック` + (parts.length ? `（${parts.join("・")}）` : "");
     const filtered = st.d.size || st.t.size || st.q || st.r !== "all";
-    document.getElementById("streamLabel").textContent = filtered ? "絞り込み結果" : ({ week: "今週のトピック", "4w": "直近4週間のトピック", all: "すべてのトピック" }[st.p]);
+    document.getElementById("streamLabel").textContent = filtered ? "絞り込み結果" : ({ week: "今週のトピック", last: "先週のトピック", "4w": "直近4週間のトピック", all: "すべてのトピック" }[st.p]);
     save();
   };
   document.addEventListener("click", e => {
